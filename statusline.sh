@@ -1,29 +1,32 @@
 #!/bin/bash
 # Claude Code Statusline - Shows Model | Context % | Next Reset | 5h Quota % | 7d Quota %
 
-# ANSI color codes
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-RESET='\033[0m'
+# Redirect all stderr to /dev/null to prevent any stray output
+exec 2>/dev/null
+
+# ANSI color codes - raw escape sequences
+GREEN="\033[0;32m"
+ORANGE="\033[0;33m"
+RED="\033[0;31m"
+CYAN="\033[0;36m"
+RESET="\033[0m"
 
 # Color a percentage value based on thresholds
 color_pct() {
     local val="$1"
     # Handle non-numeric values
     if [[ ! "$val" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-        echo "$val"
+        echo -n "$val"
         return
     fi
 
     local int_val=${val%.*}  # Remove decimal
     if (( int_val <= 50 )); then
-        printf "${GREEN}%s%%${RESET}" "$val"
+        echo -n -e "${GREEN}${val}%${RESET}"
     elif (( int_val <= 69 )); then
-        printf "${ORANGE}%s%%${RESET}" "$val"
+        echo -n -e "${ORANGE}${val}%${RESET}"
     else
-        printf "${RED}%s%%${RESET}" "$val"
+        echo -n -e "${RED}${val}%${RESET}"
     fi
 }
 
@@ -95,5 +98,5 @@ CTX_COLORED=$(color_pct "$CONTEXT_USED")
 FIVE_COLORED=$(color_pct "$FIVE_HOUR_PCT")
 SEVEN_COLORED=$(color_pct "$SEVEN_DAY_PCT")
 
-# Output: Model | 🧠 Context % | ⏰ Reset HH:mm | 5h % | 7d %
-printf "${CYAN}%s${RESET} | 🧠  %b | ⏰ %s | 5h:%b | 7d:%b" "$MODEL" "$CTX_COLORED" "$RESET_LOCAL" "$FIVE_COLORED" "$SEVEN_COLORED"
+# Output: Model | % | HH:mm | 5h % | 7d %
+echo -n -e "${CYAN}${MODEL}${RESET} | ${CTX_COLORED} | ${RESET_LOCAL} | 5h:${FIVE_COLORED} | 7d:${SEVEN_COLORED}"
