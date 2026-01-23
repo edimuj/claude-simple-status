@@ -28,7 +28,7 @@ The quota percentages are color-coded:
 ```bash
 mkdir -p ~/.claude/statusline
 curl -o ~/.claude/statusline/statusline.sh \
-  https://raw.githubusercontent.com/YOUR_USERNAME/claude-simple-status/main/statusline.sh
+  https://raw.githubusercontent.com/edimuj/claude-simple-status/main/statusline.sh
 chmod +x ~/.claude/statusline/statusline.sh
 ```
 
