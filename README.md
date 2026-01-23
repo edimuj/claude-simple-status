@@ -3,7 +3,7 @@
 A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that shows what matters: **model, context usage, and quota**.
 
 ```
-Opus 4.5 | 🧠  31% | ⏰ 23:00 | 5h:18.0% | 7d:10.0%
+Opus 4.5 | 🧠 31% | ⏰ 23:00 | 5h:18.0% | 7d:10.0%
 ```
 
 ## Why?
@@ -23,7 +23,20 @@ The quota percentages are color-coded:
 
 ## Installation
 
-### 1. Copy the script
+### One-liner
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/edimuj/claude-simple-status/main/install.sh | bash
+```
+
+This downloads the script, installs it to `~/.claude/statusline/`, and configures your `settings.json`.
+
+### Manual installation
+
+<details>
+<summary>Click to expand</summary>
+
+**1. Copy the script**
 
 ```bash
 mkdir -p ~/.claude/statusline
@@ -32,7 +45,7 @@ curl -o ~/.claude/statusline/statusline.sh \
 chmod +x ~/.claude/statusline/statusline.sh
 ```
 
-### 2. Configure Claude Code
+**2. Configure Claude Code**
 
 Add to your `~/.claude/settings.json`:
 
@@ -45,7 +58,9 @@ Add to your `~/.claude/settings.json`:
 }
 ```
 
-### 3. Restart Claude Code
+</details>
+
+### Restart Claude Code
 
 The statusline will appear at the bottom of your terminal.
 
