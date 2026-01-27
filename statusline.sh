@@ -43,14 +43,74 @@ if [[ -f "$CREDS_FILE" ]]; then
     TOKEN=$(jq -r '.claudeAiOauth.accessToken // empty' "$CREDS_FILE" 2>/dev/null)
 fi
 
-# Fetch quota data from API
+# Fetch quota data from API (async with 2-minute cache)
+CACHE_FILE="/tmp/claude-statusline-quota.json"
+LOCK_FILE="/tmp/claude-statusline-quota.lock"
+ERROR_FILE="/tmp/claude-statusline-error"
+LOG_FILE="/tmp/claude-statusline.log"
+CACHE_MAX_AGE=120  # seconds
 QUOTA_DATA=""
+
 if [[ -n "$TOKEN" ]]; then
-    QUOTA_DATA=$(curl -s --max-time 2 "https://api.anthropic.com/api/oauth/usage" \
-        -H "Authorization: Bearer $TOKEN" \
-        -H "anthropic-beta: oauth-2025-04-20" \
-        -H "Accept: application/json" \
-        -H "User-Agent: claude-code/2.1.12" 2>/dev/null)
+    # Always read cache first (even if stale) so we never block
+    if [[ -f "$CACHE_FILE" ]]; then
+        QUOTA_DATA=$(cat "$CACHE_FILE")
+    fi
+
+    # Check if cache needs refreshing
+    NEED_REFRESH=false
+    if [[ ! -f "$CACHE_FILE" ]]; then
+        NEED_REFRESH=true
+    else
+        CACHE_AGE=$(( $(date +%s) - $(stat -f %m "$CACHE_FILE" 2>/dev/null || stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0) ))
+        if (( CACHE_AGE >= CACHE_MAX_AGE )); then
+            NEED_REFRESH=true
+        fi
+    fi
+
+    # Refresh in background (skip if another fetch is already running)
+    if $NEED_REFRESH && ! [[ -f "$LOCK_FILE" ]]; then
+        (
+            touch "$LOCK_FILE"
+            HTTP_CODE=$(curl -s --max-time 10 -w "%{http_code}" -o /tmp/claude-statusline-resp.json \
+                "https://api.anthropic.com/api/oauth/usage" \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "anthropic-beta: oauth-2025-04-20" \
+                -H "Accept: application/json" \
+                -H "User-Agent: claude-code/2.1.12" 2>/dev/null)
+            FRESH=$(cat /tmp/claude-statusline-resp.json 2>/dev/null)
+            rm -f /tmp/claude-statusline-resp.json
+
+            if [[ "$HTTP_CODE" == "200" && -n "$FRESH" && "$FRESH" != *"error"* ]]; then
+                echo "$FRESH" > "$CACHE_FILE"
+                rm -f "$ERROR_FILE"
+            else
+                # Log the error with timestamp
+                TS=$(date "+%Y-%m-%d %H:%M:%S")
+                if [[ -z "$FRESH" || "$HTTP_CODE" == "000" ]]; then
+                    ERR_MSG="Timeout or connection failure"
+                elif [[ "$HTTP_CODE" != "200" ]]; then
+                    ERR_MSG="HTTP $HTTP_CODE"
+                else
+                    ERR_MSG="Invalid response"
+                fi
+                echo "[$TS] $ERR_MSG" >> "$LOG_FILE"
+                echo "$ERR_MSG" > "$ERROR_FILE"
+                # Keep log from growing unbounded (last 50 lines)
+                if [[ $(wc -l < "$LOG_FILE") -gt 50 ]]; then
+                    tail -50 "$LOG_FILE" > "$LOG_FILE.tmp" && mv "$LOG_FILE.tmp" "$LOG_FILE"
+                fi
+            fi
+            rm -f "$LOCK_FILE"
+        ) &
+        disown
+    fi
+fi
+
+# Check for recent error state
+QUOTA_ERR=""
+if [[ -f "$ERROR_FILE" ]]; then
+    QUOTA_ERR=$(cat "$ERROR_FILE")
 fi
 
 # Parse quota data
@@ -98,5 +158,9 @@ CTX_COLORED=$(color_pct "$CONTEXT_USED")
 FIVE_COLORED=$(color_pct "$FIVE_HOUR_PCT")
 SEVEN_COLORED=$(color_pct "$SEVEN_DAY_PCT")
 
-# Output: Model | % | HH:mm | 5h % | 7d %
-echo -n -e "${CYAN}${MODEL}${RESET} | ${CTX_COLORED} | ${RESET_LOCAL} | 5h:${FIVE_COLORED} | 7d:${SEVEN_COLORED}"
+# Output: Model | % | HH:mm | 5h % | 7d % [| ERR]
+OUTPUT="${CYAN}${MODEL}${RESET} | ${CTX_COLORED} | ${RESET_LOCAL} | 5h:${FIVE_COLORED} | 7d:${SEVEN_COLORED}"
+if [[ -n "$QUOTA_ERR" ]]; then
+    OUTPUT="${OUTPUT} | ${RED}ERR${RESET}"
+fi
+echo -n -e "$OUTPUT"

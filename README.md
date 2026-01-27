@@ -6,6 +6,8 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 Opus 4.5 | 31% | 23:00 | 5h:18.0% | 7d:10.0%
 ```
 
+If the quota API is unreachable, a red `ERR` indicator appears at the end and disappears once the connection recovers.
+
 ## Why?
 
 Other statusline solutions are overcomplicated. This one is ~100 lines of bash that shows:
@@ -75,9 +77,26 @@ The statusline will appear at the bottom of your terminal.
 
 The script:
 1. Receives model/context info from Claude Code via stdin (JSON)
-2. Fetches quota data from Anthropic's OAuth API using your credentials
-3. Converts UTC reset time to your local timezone
-4. Outputs a formatted statusline with ANSI colors
+2. Reads cached quota data and returns immediately (never blocks the UI)
+3. If the cache is stale (>2 minutes), refreshes from Anthropic's OAuth API in the background
+4. Converts UTC reset time to your local timezone
+5. Outputs a formatted statusline with ANSI colors
+
+Quota data is cached to `/tmp/claude-statusline-quota.json` and refreshed every 2 minutes. Since Claude Code calls the statusline on every message update, this avoids excessive API calls while keeping the data fresh.
+
+## Troubleshooting
+
+If the statusline shows `ERR`, check the error log:
+
+```bash
+cat /tmp/claude-statusline.log
+```
+
+To force a fresh quota fetch, clear the cache:
+
+```bash
+rm /tmp/claude-statusline-quota.json
+```
 
 ## License
 
