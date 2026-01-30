@@ -67,5 +67,5 @@ fi
 echo ""
 echo "Installation complete!"
 echo ""
-echo "Restart Claude Code to see your new statusline:"
+echo "Your statusline will appear at the bottom of Claude Code:"
 echo "  Opus 4.5 | 31% | 23:00 | 5h:18% | 7d:10%"

@@ -63,5 +63,5 @@ if (Test-Path $SettingsFile) {
 Write-Host ""
 Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "Restart Claude Code to see your new statusline:"
+Write-Host "Your statusline will appear at the bottom of Claude Code:"
 Write-Host "  Opus 4.5 | 31% | 23:00 | 5h:18% | 7d:10%"

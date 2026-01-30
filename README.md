@@ -92,9 +92,7 @@ Add to your `%USERPROFILE%\.claude\settings.json`:
 
 </details>
 
-### Restart Claude Code
-
-The statusline will appear at the bottom of your terminal.
+The statusline will appear at the bottom of your terminal immediately.
 
 ## Requirements
 
