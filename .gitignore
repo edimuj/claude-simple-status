@@ -1,3 +1,5 @@
 .serena/
 node_modules/
 *.log
+CLAUDE.md
+.idea

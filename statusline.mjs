@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Claude Code Statusline - Shows Model | Context % | Next Reset | 5h Quota % | 7d Quota %
+// Claude Code Statusline - Shows Branch | Model | Context % | Next Reset | 5h Quota % | 7d Quota %
 // Cross-platform Node.js version (no dependencies)
 
 import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync, appendFileSync } from 'fs';
 import { homedir, tmpdir } from 'os';
 import { join } from 'path';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { request } from 'https';
 
 // ANSI color codes
@@ -13,6 +13,7 @@ const GREEN = '\x1b[0;32m';
 const ORANGE = '\x1b[0;33m';
 const RED = '\x1b[0;31m';
 const CYAN = '\x1b[0;36m';
+const YELLOW_BOLD = '\x1b[1;33m';
 const RESET = '\x1b[0m';
 
 // File paths
@@ -168,6 +169,18 @@ function toLocalTime(isoString) {
     }
 }
 
+// Get current git branch name
+function getGitBranch() {
+    try {
+        return execSync('git rev-parse --abbrev-ref HEAD', {
+            timeout: 1000,
+            stdio: ['ignore', 'pipe', 'ignore']
+        }).toString().trim();
+    } catch {
+        return null;
+    }
+}
+
 // Main
 async function main() {
     // Read stdin
@@ -231,8 +244,11 @@ async function main() {
         hasError = errContent.length > 0;
     } catch {}
 
+    // Get git branch
+    const branch = getGitBranch();
+
     // Build output
-    let output = `${CYAN}${model}${RESET} | ${colorPct(contextUsed)} | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
+    let output = `${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)} | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
     if (hasError) {
         output += ` | ${RED}ERR${RESET}`;
     }

@@ -1,31 +1,29 @@
+<p align="center">
+  <img src="assets/claude-simple-status-mascot-512.png" width="256" alt="claude-simple-status mascot">
+</p>
+
 # claude-simple-status
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
 
 A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that shows what matters: **model, context usage, and quota**.
 
-```
-Opus 4.5 | 31% | 23:00 | 5h:18% | 7d:10%
-```
+![statusline screenshot](assets/statusline.png)
 
-If the quota API is unreachable, a red `ERR` indicator appears at the end and disappears once the connection recovers.
+## Features
 
-## Why?
+- **Zero dependencies** — single Node.js script, no npm packages
+- **Cross-platform** — works on macOS, Linux, and Windows
+- **Non-blocking** — returns cached data instantly, refreshes quota in the background
+- **Color-coded** — green/orange/red percentages at a glance
+- **Git-aware** — shows the current branch name in repos
+- **Timezone-smart** — quota reset time converted to your local timezone
 
-Other statusline solutions are overcomplicated. This one is a single cross-platform script that shows:
-
-- **Model name** (cyan) - Which model you're using
-- **Context %** - How full your context window is (green/orange/red)
-- **Reset time** - When your 5-hour quota resets (local timezone)
-- **5h %** - 5-hour rolling quota usage
-- **7d %** - 7-day rolling quota usage
-
-All percentages are color-coded:
-- **Green**: ≤50%
-- **Orange**: 51-69%
-- **Red**: ≥70%
+If the quota API is unreachable, a red `ERR` indicator appears at the end and clears automatically once the connection recovers.
 
 ## Installation
-
-### One-liner
 
 **macOS / Linux:**
 ```bash
@@ -37,12 +35,10 @@ curl -fsSL https://raw.githubusercontent.com/edimuj/claude-simple-status/main/in
 irm https://raw.githubusercontent.com/edimuj/claude-simple-status/main/install.ps1 | iex
 ```
 
-This downloads the script, installs it to `~/.claude/statusline/`, and configures your `settings.json`.
-
-### Manual installation
+The statusline appears immediately at the bottom of Claude Code.
 
 <details>
-<summary>macOS / Linux</summary>
+<summary>Manual installation (macOS / Linux)</summary>
 
 **1. Copy the script**
 
@@ -68,7 +64,7 @@ Add to your `~/.claude/settings.json`:
 </details>
 
 <details>
-<summary>Windows</summary>
+<summary>Manual installation (Windows)</summary>
 
 **1. Copy the script**
 
@@ -92,7 +88,21 @@ Add to your `%USERPROFILE%\.claude\settings.json`:
 
 </details>
 
-The statusline will appear at the bottom of your terminal immediately.
+## Uninstall
+
+Remove the script and the `statusLine` entry from your settings:
+
+```bash
+# macOS/Linux
+rm -rf ~/.claude/statusline
+```
+
+```powershell
+# Windows (PowerShell)
+Remove-Item -Recurse "$env:USERPROFILE\.claude\statusline"
+```
+
+Then delete the `"statusLine"` block from `~/.claude/settings.json`.
 
 ## Requirements
 
@@ -101,7 +111,6 @@ The statusline will appear at the bottom of your terminal immediately.
 
 ## How it works
 
-The script:
 1. Receives model/context info from Claude Code via stdin (JSON)
 2. Reads cached quota data and returns immediately (never blocks the UI)
 3. If the cache is stale (>2 minutes), refreshes from Anthropic's OAuth API in the background
@@ -132,6 +141,16 @@ rm /tmp/claude-statusline-quota.json
 Remove-Item $env:TEMP\claude-statusline-quota.json
 ```
 
+## Contributing
+
+Contributions are welcome! This project follows a few principles:
+
+- Single file, zero dependencies
+- Cross-platform (macOS, Linux, Windows)
+- Never block the UI
+
+Open an [issue](https://github.com/edimuj/claude-simple-status/issues) or submit a pull request.
+
 ## License
 
-MIT
+[MIT](https://opensource.org/licenses/MIT)
