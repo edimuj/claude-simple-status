@@ -4,6 +4,7 @@
 
 # claude-simple-status
 
+[![npm](https://img.shields.io/npm/v/claude-simple-status)](https://www.npmjs.com/package/claude-simple-status)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
@@ -14,7 +15,7 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 
 ## Features
 
-- **Zero dependencies** — single Node.js script, no npm packages
+- **Zero dependencies** — single Node.js script, no runtime dependencies
 - **Cross-platform** — works on macOS, Linux, and Windows
 - **Non-blocking** — returns cached data instantly, refreshes quota in the background
 - **Color-coded** — green/orange/red percentages at a glance
@@ -25,20 +26,39 @@ If the quota API is unreachable, a red `ERR` indicator appears at the end and cl
 
 ## Installation
 
-**macOS / Linux:**
+```bash
+npm install -g claude-simple-status
+```
+
+That's it — Claude Code is configured automatically. The statusline appears immediately.
+
+To uninstall:
+
+```bash
+claude-simple-status --uninstall
+npm uninstall -g claude-simple-status
+```
+
+<details>
+<summary>Alternative: shell script (macOS / Linux)</summary>
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/edimuj/claude-simple-status/main/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+</details>
+
+<details>
+<summary>Alternative: PowerShell (Windows)</summary>
+
 ```powershell
 irm https://raw.githubusercontent.com/edimuj/claude-simple-status/main/install.ps1 | iex
 ```
 
-The statusline appears immediately at the bottom of Claude Code.
+</details>
 
 <details>
-<summary>Manual installation (macOS / Linux)</summary>
+<summary>Manual installation</summary>
 
 **1. Copy the script**
 
@@ -61,48 +81,9 @@ Add to your `~/.claude/settings.json`:
 }
 ```
 
-</details>
-
-<details>
-<summary>Manual installation (Windows)</summary>
-
-**1. Copy the script**
-
-```powershell
-New-Item -ItemType Directory -Path "$env:USERPROFILE\.claude\statusline" -Force
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/edimuj/claude-simple-status/main/statusline.mjs" -OutFile "$env:USERPROFILE\.claude\statusline\statusline.mjs"
-```
-
-**2. Configure Claude Code**
-
-Add to your `%USERPROFILE%\.claude\settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "node ~/.claude/statusline/statusline.mjs"
-  }
-}
-```
+To uninstall, remove `~/.claude/statusline/` and the `"statusLine"` block from settings.json.
 
 </details>
-
-## Uninstall
-
-Remove the script and the `statusLine` entry from your settings:
-
-```bash
-# macOS/Linux
-rm -rf ~/.claude/statusline
-```
-
-```powershell
-# Windows (PowerShell)
-Remove-Item -Recurse "$env:USERPROFILE\.claude\statusline"
-```
-
-Then delete the `"statusLine"` block from `~/.claude/settings.json`.
 
 ## Requirements
 

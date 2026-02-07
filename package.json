@@ -1,0 +1,38 @@
+{
+  "name": "claude-simple-status",
+  "version": "1.0.2",
+  "description": "A simple statusline for Claude Code — git branch, model, context usage, and quota at a glance",
+  "type": "module",
+  "bin": {
+    "claude-simple-status": "statusline.mjs"
+  },
+  "scripts": {
+    "postinstall": "node scripts/setup.mjs install",
+    "preuninstall": "node scripts/setup.mjs uninstall"
+  },
+  "files": [
+    "statusline.mjs",
+    "scripts/setup.mjs"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "statusline",
+    "status-bar",
+    "anthropic",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edimuj/claude-simple-status.git"
+  },
+  "homepage": "https://github.com/edimuj/claude-simple-status",
+  "bugs": {
+    "url": "https://github.com/edimuj/claude-simple-status/issues"
+  },
+  "author": "Edin Mujkanovic",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

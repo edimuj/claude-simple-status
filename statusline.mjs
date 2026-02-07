@@ -8,6 +8,24 @@ import { join } from 'path';
 import { spawn, execSync } from 'child_process';
 import { request } from 'https';
 
+// Handle --uninstall flag (workaround: npm doesn't run preuninstall for global packages)
+if (process.argv.includes('--uninstall')) {
+    const settingsFile = join(homedir(), '.claude', 'settings.json');
+    try {
+        const settings = JSON.parse(readFileSync(settingsFile, 'utf8'));
+        if (settings.statusLine?.command === 'claude-simple-status') {
+            delete settings.statusLine;
+            writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + '\n');
+            console.log('claude-simple-status removed from Claude Code settings.');
+        } else {
+            console.log('Nothing to remove (statusLine not managed by claude-simple-status).');
+        }
+    } catch {
+        console.log('Nothing to remove (~/.claude/settings.json not found).');
+    }
+    process.exit(0);
+}
+
 // ANSI color codes
 const GREEN = '\x1b[0;32m';
 const ORANGE = '\x1b[0;33m';
@@ -248,9 +266,12 @@ async function main() {
     const branch = getGitBranch();
 
     // Build output
-    let output = `${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)} | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
-    if (hasError) {
-        output += ` | ${RED}ERR${RESET}`;
+    let output = `${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)}`;
+    if (token) {
+        output += ` | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
+        if (hasError) {
+            output += ` | ${RED}ERR${RESET}`;
+        }
     }
 
     process.stdout.write(output);
