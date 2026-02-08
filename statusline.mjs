@@ -40,7 +40,10 @@ const CACHE_FILE = join(tmpdir(), 'claude-statusline-quota.json');
 const LOCK_DIR = join(tmpdir(), 'claude-statusline-quota.lock');
 const ERROR_FILE = join(tmpdir(), 'claude-statusline-error');
 const LOG_FILE = join(tmpdir(), 'claude-statusline.log');
-const CACHE_MAX_AGE = 120; // seconds
+const CACHE_MAX_AGE = 120; // seconds - when to fetch
+const CACHE_STALE_AGE = 300; // seconds - when to show "--" instead of old values
+const GIT_BRANCH_CACHE = join(tmpdir(), 'claude-statusline-branches.json');
+const GIT_BRANCH_MAX_AGE = 30; // seconds
 
 // Color a percentage value based on thresholds
 function colorPct(val) {
@@ -187,13 +190,22 @@ function toLocalTime(isoString) {
     }
 }
 
-// Get current git branch name
+// Get current git branch name (cached per cwd, 30s TTL)
 function getGitBranch() {
+    const cwd = process.cwd();
     try {
-        return execSync('git rev-parse --abbrev-ref HEAD', {
+        const cache = readJsonFile(GIT_BRANCH_CACHE) || {};
+        const entry = cache[cwd];
+        if (entry && (Date.now() - entry.ts) < GIT_BRANCH_MAX_AGE * 1000) {
+            return entry.branch;
+        }
+        const branch = execSync('git rev-parse --abbrev-ref HEAD', {
             timeout: 1000,
             stdio: ['ignore', 'pipe', 'ignore']
         }).toString().trim();
+        cache[cwd] = { branch, ts: Date.now() };
+        try { writeFileSync(GIT_BRANCH_CACHE, JSON.stringify(cache)); } catch {}
+        return branch;
     } catch {
         return null;
     }
@@ -237,12 +249,17 @@ async function main() {
         }
     }
 
-    // Parse quota data
+    // Parse quota data (show "--" if cache is too stale)
     let fiveHourPct = '?';
     let sevenDayPct = '?';
     let resetLocal = '--:--';
+    const cacheIsStale = !quotaData || getFileAge(CACHE_FILE) > CACHE_STALE_AGE;
 
-    if (quotaData) {
+    if (cacheIsStale) {
+        fiveHourPct = '--';
+        sevenDayPct = '--';
+        resetLocal = '--:--';
+    } else if (quotaData) {
         if (quotaData.five_hour === null || quotaData.seven_day === null) {
             // Organization/team plan without individual quota
             fiveHourPct = 'N/A';

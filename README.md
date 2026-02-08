@@ -19,7 +19,8 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 - **Cross-platform** — works on macOS, Linux, and Windows
 - **Non-blocking** — returns cached data instantly, refreshes quota in the background
 - **Color-coded** — green/orange/red percentages at a glance
-- **Git-aware** — shows the current branch name in repos
+- **Stale-aware** — shows `--` for quota values when cache is outdated, real values appear after first refresh
+- **Git-aware** — shows the current branch name in repos (cached 30s to reduce overhead)
 - **Timezone-smart** — quota reset time converted to your local timezone
 
 If the quota API is unreachable, a red `ERR` indicator appears at the end and clears automatically once the connection recovers.
@@ -101,6 +102,11 @@ To uninstall, remove `~/.claude/statusline/` and the `"statusLine"` block from s
 Quota data is cached to the system temp directory and refreshed every 2 minutes. Since Claude Code calls the statusline on every message update, this avoids excessive API calls while keeping the data fresh.
 
 ## Troubleshooting
+
+**Indicators:**
+- `--` for quota values means the cache is stale (>5 minutes old) — values appear after the first background refresh
+- `?` means quota data has never been fetched yet
+- `ERR` (red) means the last quota fetch failed — clears automatically on recovery
 
 If the statusline shows `ERR`, check the error log:
 
