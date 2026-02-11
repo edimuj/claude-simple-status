@@ -11,7 +11,9 @@
 
 A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that shows what matters: **project name, git branch, model, context usage, quota, and API costs**.
 
-![statusline screenshot](assets/statusline.png)
+![statusline subscription](assets/statusline-subscription.png)
+
+![statusline api](assets/statusline-api.png)
 
 ## Features
 
