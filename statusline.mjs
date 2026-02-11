@@ -31,6 +31,7 @@ const GREEN = '\x1b[0;32m';
 const ORANGE = '\x1b[0;33m';
 const RED = '\x1b[0;31m';
 const CYAN = '\x1b[0;36m';
+const MAGENTA_BOLD = '\x1b[1;35m';
 const YELLOW_BOLD = '\x1b[1;33m';
 const RESET = '\x1b[0m';
 
@@ -279,11 +280,19 @@ async function main() {
         hasError = errContent.length > 0;
     } catch {}
 
+    // Get rig profile (claude-rig sets CLAUDE_CONFIG_DIR to ~/.claude-rig/profiles/<name>)
+    const rigProfile = (() => {
+        const configDir = process.env.CLAUDE_CONFIG_DIR;
+        if (!configDir) return null;
+        const match = configDir.match(/\.claude-rig\/profiles\/([^/]+)\/?$/);
+        return match ? match[1] : null;
+    })();
+
     // Get git branch
     const branch = getGitBranch();
 
     // Build output
-    let output = `${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)}`;
+    let output = `${rigProfile ? `${MAGENTA_BOLD}${rigProfile}${RESET} | ` : ''}${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)}`;
     if (token) {
         output += ` | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
         if (hasError) {
