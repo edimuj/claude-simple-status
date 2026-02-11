@@ -9,7 +9,7 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
 
-A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that shows what matters: **git branch, model, context usage, and quota**.
+A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that shows what matters: **project name, git branch, model, context usage, quota, and API costs**.
 
 ![statusline screenshot](assets/statusline.png)
 
@@ -19,8 +19,10 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 - **Cross-platform** — works on macOS, Linux, and Windows
 - **Non-blocking** — returns cached data instantly, refreshes quota in the background
 - **Color-coded** — green/orange/red percentages at a glance
-- **Stale-aware** — shows `--` for quota values when cache is outdated, real values appear after first refresh
+- **Project name** — bold uppercase project directory name so you never mix up sessions
 - **Git-aware** — shows the current branch name in repos (cached 30s to reduce overhead)
+- **API cost tracking** — pay-as-you-go API users see cumulative session cost instead of quota
+- **Stale-aware** — shows `--` for quota values when cache is outdated, real values appear after first refresh
 - **Timezone-smart** — quota reset time converted to your local timezone
 
 If the quota API is unreachable, a red `ERR` indicator appears at the end and clears automatically once the connection recovers.
@@ -93,11 +95,13 @@ To uninstall, remove `~/.claude/statusline/` and the `"statusLine"` block from s
 
 ## How it works
 
-1. Receives model/context info from Claude Code via stdin (JSON)
+1. Receives model/context/cost info from Claude Code via stdin (JSON)
 2. Reads cached quota data and returns immediately (never blocks the UI)
 3. If the cache is stale (>2 minutes), refreshes from Anthropic's OAuth API in the background
 4. Converts UTC reset time to your local timezone
 5. Outputs a formatted statusline with ANSI colors
+
+**Subscription users** see quota percentages and reset times. **API (pay-as-you-go) users** see cumulative session cost (e.g. `$4.72`) — calculated by Claude Code from actual token usage, no external pricing lookups needed.
 
 Quota data is cached to the system temp directory and refreshed every 2 minutes. Since Claude Code calls the statusline on every message update, this avoids excessive API calls while keeping the data fresh.
 
@@ -132,10 +136,10 @@ Remove-Item $env:TEMP\claude-statusline-quota.json
 
 ### [claude-rig](https://github.com/edimuj/claude-rig)
 
-Run multiple isolated Claude Code configurations simultaneously — each with its own plugins, skills, MCP servers, and settings. When a session is launched through claude-rig, the active profile name appears in the statusline in bold magenta as the first segment:
+Run multiple isolated Claude Code configurations simultaneously — each with its own plugins, skills, MCP servers, and settings. When a session is launched through claude-rig, the active profile name appears in the statusline in bold magenta:
 
 ```
-minimal | main | Opus 4.6 | 12% | 14:30 | 5h:34% | 7d:12%
+MY-PROJECT [main] | minimal | Opus 4.6 | 12% | 14:30 | 5h:34% | 7d:12%
 ```
 
 No configuration needed — claude-simple-status detects claude-rig automatically. Users not using claude-rig are unaffected.

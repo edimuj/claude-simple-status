@@ -4,7 +4,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync } from 'fs';
 import { homedir, tmpdir } from 'os';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { spawn, execSync } from 'child_process';
 
 // Handle --uninstall flag (workaround: npm doesn't run preuninstall for global packages)
@@ -30,6 +30,7 @@ const GREEN = '\x1b[0;32m';
 const ORANGE = '\x1b[0;33m';
 const RED = '\x1b[0;31m';
 const CYAN = '\x1b[0;36m';
+const WHITE_BOLD = '\x1b[1;37m';
 const MAGENTA_BOLD = '\x1b[1;35m';
 const YELLOW_BOLD = '\x1b[1;33m';
 const RESET = '\x1b[0m';
@@ -198,10 +199,18 @@ async function main() {
     // Parse Claude Code input
     let model = 'Unknown';
     let contextUsed = 0;
+    let totalCostUsd = null;
+    let projectName = null;
     try {
         const data = JSON.parse(input);
         model = data.model?.display_name || 'Unknown';
         contextUsed = data.context_window?.used_percentage || 0;
+        if (typeof data.cost?.total_cost_usd === 'number') {
+            totalCostUsd = data.cost.total_cost_usd;
+        }
+        if (data.workspace?.project_dir) {
+            projectName = basename(data.workspace.project_dir).toUpperCase();
+        }
     } catch {}
 
     // Get OAuth token
@@ -267,12 +276,17 @@ async function main() {
     const branch = getGitBranch();
 
     // Build output
-    let output = `${rigProfile ? `${MAGENTA_BOLD}${rigProfile}${RESET} | ` : ''}${branch ? `${YELLOW_BOLD}${branch}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)}`;
+    const projectSegment = projectName
+        ? `${WHITE_BOLD}${projectName}${branch ? ` ${YELLOW_BOLD}[${branch}]` : ''}${RESET}`
+        : (branch ? `${YELLOW_BOLD}${branch}${RESET}` : '');
+    let output = `${projectSegment ? `${projectSegment} | ` : ''}${rigProfile ? `${MAGENTA_BOLD}${rigProfile}${RESET} | ` : ''}${CYAN}${model}${RESET} | ${colorPct(contextUsed)}`;
     if (token) {
         output += ` | ${resetLocal} | 5h:${colorPct(fiveHourPct)} | 7d:${colorPct(sevenDayPct)}`;
         if (hasError) {
             output += ` | ${RED}ERR${RESET}`;
         }
+    } else if (totalCostUsd !== null) {
+        output += ` | ${GREEN}$${totalCostUsd.toFixed(2)}${RESET}`;
     }
 
     process.stdout.write(output);
