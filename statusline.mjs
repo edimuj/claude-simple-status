@@ -2,11 +2,10 @@
 // Claude Code Statusline - Shows Branch | Model | Context % | Next Reset | 5h Quota % | 7d Quota %
 // Cross-platform Node.js version (no dependencies)
 
-import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync, appendFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync } from 'fs';
 import { homedir, tmpdir } from 'os';
 import { join } from 'path';
 import { spawn, execSync } from 'child_process';
-import { request } from 'https';
 
 // Handle --uninstall flag (workaround: npm doesn't run preuninstall for global packages)
 if (process.argv.includes('--uninstall')) {
@@ -91,30 +90,6 @@ function acquireLock() {
     } catch {
         return false;
     }
-}
-
-// Release lock
-function releaseLock() {
-    try { rmdirSync(LOCK_DIR); } catch {}
-}
-
-// Log error with timestamp
-function logError(msg) {
-    const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
-    try {
-        appendFileSync(LOG_FILE, `[${ts}] ${msg}\n`);
-        writeFileSync(ERROR_FILE, msg);
-        // Trim log to last 50 lines
-        const lines = readFileSync(LOG_FILE, 'utf8').split('\n').filter(Boolean);
-        if (lines.length > 50) {
-            writeFileSync(LOG_FILE, lines.slice(-50).join('\n') + '\n');
-        }
-    } catch {}
-}
-
-// Clear error state
-function clearError() {
-    try { writeFileSync(ERROR_FILE, ''); } catch {}
 }
 
 // Spawn background refresh process

@@ -128,6 +128,18 @@ rm /tmp/claude-statusline-quota.json
 Remove-Item $env:TEMP\claude-statusline-quota.json
 ```
 
+## Related projects
+
+### [claude-rig](https://github.com/edimuj/claude-rig)
+
+Run multiple isolated Claude Code configurations simultaneously — each with its own plugins, skills, MCP servers, and settings. When a session is launched through claude-rig, the active profile name appears in the statusline in bold magenta as the first segment:
+
+```
+minimal | main | Opus 4.6 | 12% | 14:30 | 5h:34% | 7d:12%
+```
+
+No configuration needed — claude-simple-status detects claude-rig automatically. Users not using claude-rig are unaffected.
+
 ## Contributing
 
 Contributions are welcome! This project follows a few principles:
