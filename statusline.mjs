@@ -264,11 +264,11 @@ async function main() {
         hasError = errContent.length > 0;
     } catch {}
 
-    // Get rig profile (claude-rig sets CLAUDE_CONFIG_DIR to ~/.claude-rig/profiles/<name>)
+    // Get rig name (claude-rig sets CLAUDE_CONFIG_DIR to ~/.claude-rig/rigs/<name>)
     const rigProfile = (() => {
         const configDir = process.env.CLAUDE_CONFIG_DIR;
         if (!configDir) return null;
-        const match = configDir.match(/\.claude-rig\/profiles\/([^/]+)\/?$/);
+        const match = configDir.match(/\.claude-rig\/rigs\/([^/]+)\/?$/);
         return match ? match[1] : null;
     })();
 
