@@ -21,6 +21,8 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 - **Cross-platform** — works on macOS, Linux, and Windows
 - **Non-blocking** — returns cached data instantly, refreshes quota in the background
 - **Color-coded** — green/orange/red percentages at a glance
+- **Context velocity** — estimates remaining turns until context compaction (`42% →~8t`), with directional arrows showing if burn rate is accelerating (↑), steady (→), or decelerating (↓)
+- **Quota pressure** — reset time changes color based on projected burn rate: green (safe), orange (cutting it close), red (will hit the limit before reset). The 7d percentage color is also overridden when the projection says danger
 - **Project name** — bold uppercase project directory name so you never mix up sessions
 - **Git-aware** — shows the current branch name in repos (cached 30s to reduce overhead)
 - **API cost tracking** — pay-as-you-go API users see cumulative session cost instead of quota
@@ -100,12 +102,12 @@ To uninstall, remove `~/.claude/statusline/` and the `"statusLine"` block from s
 1. Receives model/context/cost info from Claude Code via stdin (JSON)
 2. Reads cached quota data and returns immediately (never blocks the UI)
 3. If the cache is stale (>2 minutes), refreshes from Anthropic's OAuth API in the background
-4. Converts UTC reset time to your local timezone
+4. Tracks context usage and quota utilization over time to compute velocity/burn rate predictions
 5. Outputs a formatted statusline with ANSI colors
 
 **Subscription users** see quota percentages and reset times. **API (pay-as-you-go) users** see cumulative session cost (e.g. `$4.72`) — calculated by Claude Code from actual token usage, no external pricing lookups needed.
 
-Quota data is cached to the system temp directory and refreshed every 2 minutes. Since Claude Code calls the statusline on every message update, this avoids excessive API calls while keeping the data fresh.
+Quota data is cached to the system temp directory and refreshed every 2 minutes. Context and quota history are tracked across invocations to power the predictive features — both reset automatically when a new window or compaction is detected.
 
 ## Troubleshooting
 
