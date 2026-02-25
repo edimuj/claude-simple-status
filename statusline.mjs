@@ -298,7 +298,7 @@ function getQuotaPressure(windowKey, utilization, resetsAtIso) {
 
     const oldest = history.readings[0];
     const elapsedMs = now - oldest.ts;
-    if (elapsedMs < 60_000) return null; // need at least 1 min of data
+    if (elapsedMs < 600_000) return null; // need at least 10 min of data to avoid noisy early-window spikes
 
     const pctGained = utilization - oldest.pct;
     if (pctGained <= 0) return 'safe'; // not growing
