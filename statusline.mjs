@@ -46,7 +46,7 @@ const CACHE_STALE_AGE = 300; // seconds - when to show "--" instead of old value
 const GIT_BRANCH_CACHE = join(tmpdir(), 'claude-statusline-branches.json');
 const GIT_BRANCH_MAX_AGE = 30; // seconds
 const CONTEXT_HISTORY_FILE = join(tmpdir(), 'claude-statusline-context.json');
-const CONTEXT_COMPACT_THRESHOLD = 95; // % at which compaction typically fires
+const CONTEXT_COMPACT_THRESHOLD = 83; // % at which autocompact typically fires
 const CONTEXT_MAX_SAMPLES = 20; // rolling window of turn deltas
 const QUOTA_HISTORY_FILE = join(tmpdir(), 'claude-statusline-quota-history.json');
 const QUOTA_MAX_READINGS = 30; // ~1h of data at 120s refresh intervals
@@ -233,8 +233,9 @@ function getContextVelocity(projectDir, contextUsed) {
     history[projectDir] = entry;
     try { writeFileSync(CONTEXT_HISTORY_FILE, JSON.stringify(history)); } catch {}
 
-    // Need at least 2 turn deltas to estimate
-    if (entry.deltas.length < 2) return null;
+    // Need at least 5 turn deltas to estimate — fewer gives noisy results
+    // (especially right after compaction when early turns inflate context quickly)
+    if (entry.deltas.length < 5) return null;
 
     // Weighted average: recent deltas matter more
     let weightSum = 0;
