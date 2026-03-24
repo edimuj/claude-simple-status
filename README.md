@@ -21,8 +21,8 @@ A simple, no-frills statusline for [Claude Code](https://docs.anthropic.com/en/d
 - **Cross-platform** — works on macOS, Linux, and Windows
 - **Non-blocking** — returns cached data instantly, refreshes quota in the background
 - **Color-coded** — green/orange/red percentages at a glance
-- **Context velocity** — estimates remaining turns until context compaction (`42% →~8t`), with directional arrows showing if burn rate is accelerating (↑), steady (→), or decelerating (↓)
-- **Quota pressure** — reset time changes color based on projected burn rate: green (safe), orange (cutting it close), red (will hit the limit before reset). The 7d percentage color is also overridden when the projection says danger
+- **Context velocity** *(opt-in)* — estimates remaining turns until context compaction (`42% →~8t`), with directional arrows showing if burn rate is accelerating (↑), steady (→), or decelerating (↓)
+- **Quota pressure** *(opt-in)* — reset time changes color based on projected burn rate: green (safe), orange (cutting it close), red (will hit the limit before reset). The 7d percentage color is also overridden when the projection says danger
 - **Project name** — bold uppercase project directory name so you never mix up sessions
 - **Git-aware** — shows the current branch name in repos (cached 30s to reduce overhead)
 - **API cost tracking** — pay-as-you-go API users see cumulative session cost instead of quota
@@ -91,6 +91,24 @@ Add to your `~/.claude/settings.json`:
 To uninstall, remove `~/.claude/statusline/` and the `"statusLine"` block from settings.json.
 
 </details>
+
+## Configuration
+
+Create `~/.config/claude-simple-status.json` to enable optional features:
+
+```json
+{
+  "contextVelocity": true,
+  "quotaBurnRate": true
+}
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `contextVelocity` | `false` | Show estimated turns remaining until context compaction (`42% →~8t`) |
+| `quotaBurnRate` | `false` | Color reset time and 7d quota based on projected burn rate |
+
+Without this file, you get a clean statusline showing just project, branch, model, context %, reset time, and quota percentages.
 
 ## Requirements
 

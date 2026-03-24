@@ -5,6 +5,7 @@ Single-file statusline for Claude Code. See README.md for user-facing docs.
 ## Architecture
 
 One script, zero dependencies: `statusline.mjs` (Node.js, ESM).
+Config file: `~/.config/claude-simple-status.json` (optional, features off by default).
 
 - Receives model/context JSON from Claude Code via stdin
 - Fetches quota from Anthropic OAuth API in a detached background child process (never blocks)

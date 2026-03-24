@@ -81,6 +81,12 @@ function readJsonFile(filepath) {
     }
 }
 
+// User config — features off by default, opt-in via ~/.config/claude-simple-status.json
+const CONFIG_FILE = join(homedir(), '.config', 'claude-simple-status.json');
+const userConfig = readJsonFile(CONFIG_FILE) || {};
+const SHOW_CONTEXT_VELOCITY = userConfig.contextVelocity === true;
+const SHOW_BURN_RATE = userConfig.quotaBurnRate === true;
+
 // Clean up stale lock (older than 30s)
 function cleanStaleLock() {
     if (existsSync(LOCK_DIR) && getFileAge(LOCK_DIR) > 30) {
@@ -400,8 +406,8 @@ async function main() {
         hasError = errContent.length > 0;
     } catch {}
 
-    // Get context velocity estimate
-    const velocity = getContextVelocity(projectDir, contextUsed);
+    // Get context velocity estimate (opt-in)
+    const velocity = SHOW_CONTEXT_VELOCITY ? getContextVelocity(projectDir, contextUsed) : null;
 
     // Get rig name (claude-rig sets CLAUDE_CONFIG_DIR to ~/.claude-rig/rigs/<name>)
     const rigProfile = (() => {
@@ -426,15 +432,15 @@ async function main() {
         contextDisplay += ` ${turnsColor}${velocity.arrow}${turnsStr}${RESET}`;
     }
 
-    // Color the reset time based on 5h quota burn rate projection
-    const fiveHourPressure = getQuotaPressure('5h', fiveHourPct, fiveHourResetsAt);
+    // Color the reset time based on 5h quota burn rate projection (opt-in)
+    const fiveHourPressure = SHOW_BURN_RATE ? getQuotaPressure('5h', fiveHourPct, fiveHourResetsAt) : null;
     let resetDisplay = resetLocal;
     if (fiveHourPressure === 'danger') resetDisplay = `${RED}${resetLocal}${RESET}`;
     else if (fiveHourPressure === 'tight') resetDisplay = `${ORANGE}${resetLocal}${RESET}`;
     else if (fiveHourPressure === 'safe') resetDisplay = `${GREEN}${resetLocal}${RESET}`;
 
-    // Override 7d percentage color when burn rate projects exhaustion before reset
-    const sevenDayPressure = getQuotaPressure('7d', sevenDayPct, sevenDayResetsAt);
+    // Override 7d percentage color when burn rate projects exhaustion before reset (opt-in)
+    const sevenDayPressure = SHOW_BURN_RATE ? getQuotaPressure('7d', sevenDayPct, sevenDayResetsAt) : null;
     let sevenDayDisplay = colorPct(sevenDayPct);
     if (sevenDayPressure === 'danger') sevenDayDisplay = `${RED}${sevenDayPct}%${RESET}`;
     else if (sevenDayPressure === 'tight') sevenDayDisplay = `${ORANGE}${sevenDayPct}%${RESET}`;
