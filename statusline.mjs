@@ -132,7 +132,7 @@ function refreshInBackground(token) {
             path: '/api/oauth/usage',
             method: 'GET',
             headers: {
-                'Authorization': 'Bearer ${token}',
+                'Authorization': 'Bearer ' + process.env._CLAUDE_SS_TOKEN,
                 'anthropic-beta': 'oauth-2025-04-20',
                 'Accept': 'application/json',
                 'User-Agent': 'claude-code/2.1.12'
@@ -149,7 +149,6 @@ function refreshInBackground(token) {
                         try { writeFileSync(ERROR_FILE, ''); } catch {}
                     } catch { logError('Invalid JSON'); }
                 } else if (res.statusCode !== 401) {
-                    // Skip 401 - token not ready yet at startup, will retry next cycle
                     logError('HTTP ' + res.statusCode);
                 }
                 try { rmdirSync(LOCK_DIR); } catch {}
@@ -161,7 +160,8 @@ function refreshInBackground(token) {
         `
     ], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
+        env: { _CLAUDE_SS_TOKEN: token }
     });
     child.unref();
 }
