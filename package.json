@@ -7,6 +7,7 @@
     "claude-simple-status": "statusline.mjs"
   },
   "scripts": {
+    "test": "node --test statusline.test.mjs",
     "postinstall": "node scripts/setup.mjs install",
     "preuninstall": "node scripts/setup.mjs uninstall"
   },

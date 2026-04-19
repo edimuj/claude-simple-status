@@ -2,10 +2,11 @@
 // Claude Code Statusline - Shows Branch | Model | Context % | Next Reset | 5h Quota % | 7d Quota %
 // Cross-platform Node.js version (no dependencies)
 
-import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync, realpathSync } from 'fs';
 import { homedir, tmpdir } from 'os';
 import { join, basename } from 'path';
 import { spawn, execSync } from 'child_process';
+import { fileURLToPath } from 'url';
 
 // Handle --uninstall flag (workaround: npm doesn't run preuninstall for global packages)
 if (process.argv.includes('--uninstall')) {
@@ -458,4 +459,12 @@ async function main() {
     process.stdout.write(output);
 }
 
-main().catch(() => process.exit(1));
+// Only run when executed directly (not imported for testing)
+const __filename = fileURLToPath(import.meta.url);
+const _isMain = (() => {
+    try { return process.argv[1] && realpathSync(process.argv[1]) === realpathSync(__filename); }
+    catch { return false; }
+})();
+if (_isMain) main().catch(() => process.exit(1));
+
+export { colorPct, getFileAge, readJsonFile, toLocalTime, getContextVelocity, getQuotaPressure, main };
