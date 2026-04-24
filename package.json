@@ -1,6 +1,6 @@
 {
   "name": "claude-simple-status",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A simple statusline for Claude Code — project name, git branch, model, context usage, quota, and API costs at a glance",
   "type": "module",
   "bin": {
