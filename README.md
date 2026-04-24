@@ -99,7 +99,8 @@ Create `~/.config/claude-simple-status.json` to enable optional features:
 ```json
 {
   "contextVelocity": true,
-  "quotaBurnRate": true
+  "quotaBurnRate": true,
+  "refreshInterval": 300
 }
 ```
 
@@ -107,6 +108,7 @@ Create `~/.config/claude-simple-status.json` to enable optional features:
 |--------|---------|-------------|
 | `contextVelocity` | `false` | Show estimated turns remaining until context compaction (`42% →~8t`) |
 | `quotaBurnRate` | `false` | Color reset time and 7d quota based on projected burn rate |
+| `refreshInterval` | `300` | Seconds between quota API refreshes (min 60) |
 
 Without this file, you get a clean statusline showing just project, branch, model, context %, reset time, and quota percentages.
 

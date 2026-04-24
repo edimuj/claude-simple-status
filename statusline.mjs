@@ -2,7 +2,7 @@
 // Claude Code Statusline - Shows Branch | Model | Context % | Next Reset | 5h Quota % | 7d Quota %
 // Cross-platform Node.js version (no dependencies)
 
-import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync, realpathSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, rmdirSync, statSync, existsSync, realpathSync, readdirSync, unlinkSync } from 'fs';
 import { homedir, tmpdir } from 'os';
 import { join, basename } from 'path';
 import { spawn, execSync } from 'child_process';
@@ -41,9 +41,9 @@ const CREDS_FILE = join(homedir(), '.claude', '.credentials.json');
 const CACHE_FILE = join(tmpdir(), 'claude-statusline-quota.json');
 const LOCK_DIR = join(tmpdir(), 'claude-statusline-quota.lock');
 const ERROR_FILE = join(tmpdir(), 'claude-statusline-error');
+const BACKOFF_FILE = join(tmpdir(), 'claude-statusline-backoff');
 const LOG_FILE = join(tmpdir(), 'claude-statusline.log');
-const CACHE_MAX_AGE = 120; // seconds - when to fetch
-const CACHE_STALE_AGE = 300; // seconds - when to show "--" instead of old values
+let CACHE_STALE_AGE = 300;
 const GIT_BRANCH_CACHE = join(tmpdir(), 'claude-statusline-branches.json');
 const GIT_BRANCH_MAX_AGE = 30; // seconds
 const CONTEXT_HISTORY_FILE = join(tmpdir(), 'claude-statusline-context.json');
@@ -87,6 +87,8 @@ const CONFIG_FILE = join(homedir(), '.config', 'claude-simple-status.json');
 const userConfig = readJsonFile(CONFIG_FILE) || {};
 const SHOW_CONTEXT_VELOCITY = userConfig.contextVelocity === true;
 const SHOW_BURN_RATE = userConfig.quotaBurnRate === true;
+const CACHE_MAX_AGE = Math.max(60, Number(userConfig.refreshInterval) || 300);
+CACHE_STALE_AGE = Math.max(CACHE_STALE_AGE, CACHE_MAX_AGE * 2);
 
 // Clean up stale lock (older than 30s)
 function cleanStaleLock() {
@@ -115,6 +117,7 @@ function refreshInBackground(token) {
         const CACHE_FILE = ${JSON.stringify(CACHE_FILE)};
         const LOCK_DIR = ${JSON.stringify(LOCK_DIR)};
         const ERROR_FILE = ${JSON.stringify(ERROR_FILE)};
+        const BACKOFF_FILE = ${JSON.stringify(BACKOFF_FILE)};
         const LOG_FILE = ${JSON.stringify(LOG_FILE)};
 
         function logError(msg) {
@@ -135,7 +138,7 @@ function refreshInBackground(token) {
                 'Authorization': 'Bearer ' + process.env._CLAUDE_SS_TOKEN,
                 'anthropic-beta': 'oauth-2025-04-20',
                 'Accept': 'application/json',
-                'User-Agent': 'claude-code/2.1.12'
+                'User-Agent': 'claude-simple-status/1.5.0'
             },
             timeout: 10000
         }, (res) => {
@@ -147,7 +150,13 @@ function refreshInBackground(token) {
                         JSON.parse(data);
                         writeFileSync(CACHE_FILE, data);
                         try { writeFileSync(ERROR_FILE, ''); } catch {}
+                        try { writeFileSync(BACKOFF_FILE, '{}'); } catch {}
                     } catch { logError('Invalid JSON'); }
+                } else if (res.statusCode === 429) {
+                    const retrySec = parseInt(res.headers['retry-after'], 10) || 300;
+                    const until = Date.now() + retrySec * 1000;
+                    try { writeFileSync(BACKOFF_FILE, JSON.stringify({ until })); } catch {}
+                    logError('HTTP 429 (backoff ' + retrySec + 's)');
                 } else if (res.statusCode !== 401) {
                     logError('HTTP ' + res.statusCode);
                 }
@@ -352,6 +361,25 @@ async function main() {
         }
     } catch {}
 
+    // Persist session snapshot for external tools (/tmp/claude-sessions/<id>.json)
+    try {
+        const sessionId = JSON.parse(input).session_id;
+        if (sessionId) {
+            const sessDir = join(tmpdir(), 'claude-sessions');
+            mkdirSync(sessDir, { recursive: true });
+            writeFileSync(join(sessDir, `${sessionId}.json`), input);
+            // Clean up stale sessions (not updated in 5 min = dead)
+            for (const f of readdirSync(sessDir)) {
+                if (f.endsWith('.json')) {
+                    try {
+                        const age = Date.now() - statSync(join(sessDir, f)).mtimeMs;
+                        if (age > 5 * 60 * 1000) unlinkSync(join(sessDir, f));
+                    } catch {}
+                }
+            }
+        }
+    } catch {}
+
     // Get OAuth token
     let token = null;
     const creds = readJsonFile(CREDS_FILE);
@@ -367,8 +395,10 @@ async function main() {
         cleanStaleLock();
         const cacheAge = getFileAge(CACHE_FILE);
         const needRefresh = !quotaData || cacheAge >= CACHE_MAX_AGE;
+        const backoffUntil = Number(readJsonFile(BACKOFF_FILE)?.until || 0);
+        const inBackoff = Date.now() < backoffUntil;
 
-        if (needRefresh && acquireLock()) {
+        if (needRefresh && !inBackoff && acquireLock()) {
             refreshInBackground(token);
         }
     }
