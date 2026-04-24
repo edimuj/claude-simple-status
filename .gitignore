@@ -3,4 +3,6 @@ node_modules/
 *.log
 CLAUDE.md
 .ideashare/
-share/
+.dev/
+share
+.idea/share/
